@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Reservation extends Model
 {
     use HasFactory;
+    protected $table = 'reservations'; // tablo adı
 
     protected $fillable = [
         'user_id',
@@ -21,18 +22,23 @@ class Reservation extends Model
         'people',
         'message',
         'status',
+        'is_preorder',
         'preorder_token',
     ];
 
-    // Reservation → User ilişkisi
+    /* 🔗 İlişkiler */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Reservation → Table ilişkisi
     public function table()
     {
         return $this->belongsTo(Table::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }

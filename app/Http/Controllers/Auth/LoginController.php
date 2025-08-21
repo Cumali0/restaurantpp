@@ -23,16 +23,24 @@ class LoginController extends Controller
             'password' => 'required'
         ]);
 
-        // Login denemesi
-        if (Auth::attempt($request->only('email', 'password'))) {
+
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended('/dashboard'); // giriş başarılıysa yönlendirme
+
+            // Eğer giriş yapan admin ise logout yap ve hata ver
+            if (Auth::user()->id === 1) { // Admin ID 1 ise
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Bu alan sadece normal kullanıcılar içindir.'
+                ]);
+            }
+
+            return redirect()->intended(route('home'));
         }
 
-        // Hatalı giriş
-        return back()->withErrors([
-            'email' => 'Email veya şifre hatalı.',
-        ]);
+        return back()->withErrors(['email' => 'Email veya şifre hatalı!'])->withInput();
     }
 
     // Çıkış işlemi
@@ -41,6 +49,7 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+
+        return redirect('/');
     }
 }

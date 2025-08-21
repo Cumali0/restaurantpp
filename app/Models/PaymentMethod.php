@@ -9,9 +9,14 @@ class PaymentMethod extends Model
 {
     use HasFactory;
 
-    // Mass assignment için hangi alanlar doldurulabilir
     protected $fillable = [
         'name',
         'is_active',
     ];
+
+    /* 🔗 İlişkiler */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

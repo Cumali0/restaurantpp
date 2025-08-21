@@ -19,10 +19,11 @@
 
     <!-- Custom CSS -->
     <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
 </head>
 <div class="container position-relative p-0">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 px-lg-5 py-3 py-lg-0">
-        <a href="#" class="navbar-brand p-0">
+        <a href="{{ url('/') }}" class="navbar-brand p-0">
             <h1 class="text-primary m-0"><i class="fa fa-utensils me-3"></i>Restaurant</h1>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -31,36 +32,43 @@
 
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto py-0 pe-4">
-                <a href="#" class="nav-item nav-link active">Ev</a>
+                <a href="{{ url('/') }}" class="nav-item nav-link active">Ev</a>
                 <a href="#hakkimiz-section" class="nav-item nav-link">Hakkında</a>
                 <a href="{{ route('menu.index') }}" class="nav-item nav-link">Menü</a>
                 <a href="#irtibat-section" class="nav-item nav-link">İrtibat</a>
             </div>
 
-            <!-- Giriş / Kayıt Butonları -->
+            <!-- Giriş / Kayıt / Profil -->
             <div class="d-flex">
                 @guest
                     <a href="{{ route('login') }}" class="btn btn-outline-light me-2">Giriş Yap</a>
                     <a href="{{ route('register') }}" class="btn btn-primary">Kayıt Ol</a>
-                @else
-                    <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown">
-                            {{ Auth::user()->name }}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                            <li><a class="dropdown-item" href="{{ route('dashboard') }}">Panel</a></li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button class="dropdown-item">Çıkış Yap</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
                 @endguest
-            </div>
 
+                    @auth
+                        <div class="dropdown">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown">
+                                {{ auth()->user()->name }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                                <li><a class="dropdown-item" href="{{ route('profile') }}">Profilim</a></li>
+                                <li><a class="dropdown-item" href="{{ route('user.resarvation') }}">Rezervasyonlarım</a></li>
+                                <li><a class="dropdown-item" href="{{ route('orders.index') }}">Siparişlerim</a></li>
+                                <li>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button class="dropdown-item" type="submit">Çıkış Yap</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    @endauth
+
+
+            </div>
         </div>
     </nav>
 </div>
 
+<!-- Footer altına içerik gelince mesafe bırakmak için örnek -->
+<div style="height: 100px; background-color: #0F172B;"></div>

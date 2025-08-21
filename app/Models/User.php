@@ -13,7 +13,9 @@ class User extends Authenticatable
     // Mass assignment için hangi alanların doldurulabileceğini belirtiyoruz
     protected $fillable = [
         'role_id',
-        'name',
+        'name' ,
+        'surname',
+        'phone',
         'email',
         'password',
     ];

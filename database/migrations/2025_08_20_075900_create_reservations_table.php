@@ -8,7 +8,10 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+
+            // Guest kullanıcılar için nullable
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+
             $table->foreignId('table_id')->constrained('tables')->onDelete('cascade');
             $table->string('name');
             $table->string('surname');
@@ -19,6 +22,7 @@ return new class extends Migration {
             $table->integer('people');
             $table->text('message')->nullable();
             $table->enum('status', ['pending', 'reserved', 'approved', 'rejected', 'cancelled'])->default('pending');
+            $table->boolean('is_preorder')->default(false);
             $table->string('preorder_token')->nullable();
             $table->timestamps();
         });

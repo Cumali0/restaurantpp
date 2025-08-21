@@ -16,14 +16,13 @@ class Order extends Model
         'order_time',
     ];
 
-    // Order → Reservation ilişkisi
+    /* 🔗 İlişkiler */
     public function reservation()
     {
         return $this->belongsTo(Reservation::class);
     }
 
-    // Order → OrderItems ilişkisi (bir siparişin birden fazla ürünü olabilir)
-    public function orderItems()
+    public function items()
     {
         return $this->hasMany(OrderItem::class);
     }

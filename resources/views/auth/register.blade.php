@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kayıt Ol - Restaurant</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- CSRF için meta -->
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Heebo&display=swap" rel="stylesheet">
@@ -133,7 +134,17 @@
         @csrf
         <div class="position-relative">
             <i class="fas fa-user"></i>
-            <input type="text" name="name" class="form-control ps-5" placeholder="Ad Soyad" required>
+            <input type="text" name="name" class="form-control ps-5" placeholder="Ad" required>
+        </div>
+
+        <div class="position-relative">
+            <i class="fas fa-user"></i>
+            <input type="text" name="surname" class="form-control ps-5" placeholder="Soyad" required>
+        </div>
+
+        <div class="position-relative">
+            <i class="fas fa-phone"></i>
+            <input type="text" name="phone" class="form-control ps-5" placeholder="Telefon" required>
         </div>
 
         <div class="position-relative">
@@ -155,6 +166,8 @@
 
         <p>Zaten hesabınız var mı? <a href="{{ route('login') }}">Giriş Yap</a></p>
     </form>
+
+
 </div>
 
 </body>

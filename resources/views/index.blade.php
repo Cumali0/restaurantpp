@@ -163,37 +163,65 @@
 
                     @csrf
                     <div class="row g-3">
-                        <!-- Ad -->
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="name" name="name" placeholder="Ad" required>
-                                <label for="name">Ad</label>
+                        @guest
+                            <!-- Giriş yapmamış kullanıcı: tüm alanlar boş ve doldurulabilir -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="name" name="name" placeholder="Ad" required>
+                                    <label for="name">Ad</label>
+                                </div>
                             </div>
-                        </div>
-                        <!-- Soyad -->
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="surname" name="surname" placeholder="Soyad" required>
-                                <label for="surname">Soyad</label>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="surname" name="surname" placeholder="Soyad" required>
+                                    <label for="surname">Soyad</label>
+                                </div>
                             </div>
-                        </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="phone" name="phone" placeholder="Telefon" required>
+                                    <label for="phone">Telefon</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="E-posta Adresi" required>
+                                    <label for="email">E-posta Adresi</label>
+                                </div>
+                            </div>
+                        @endguest
 
 
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="phone" name="phone" placeholder="Telefon" required>
-                                <label for="phone">Telefon</label>
-                            </div>
-                        </div>
+                            @auth
+                                <!-- Giriş yapmış kullanıcı: alanlar dolu ve disable -->
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="name" name="name" value="{{ optional(auth()->user())->name }}" disabled>
+                                        <label for="name">Ad</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="surname" name="surname" value="{{ optional(auth()->user())->surname }}" disabled>
+                                        <label for="surname">Soyad</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="phone" name="phone" value="{{ optional(auth()->user())->phone }}" disabled>
+                                        <label for="phone">Telefon</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="email" name="email" value="{{ optional(auth()->user())->email }}" disabled>
+                                        <label for="email">E-posta Adresi</label>
+                                    </div>
+                                </div>
+                            @endauth
 
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <input type="email" class="form-control" id="email" name="email" placeholder="E-posta Adresi" required>
-                                <label for="email">E-posta Adresi</label>
-                            </div>
-                        </div>
 
-                        <!-- Tarih & Saat -->
+                            <!-- Tarih & Saat -->
                         <div class="col-md-6">
                             <div class="form-floating date" id="date3">
                                 <input type="text" class="form-control" id="datetimepicker" name="datetime" placeholder="Date & Time" required autocomplete="off">
@@ -263,6 +291,22 @@
 </div>
 
 <!--Reservation Section End-->
+
+
+
+<!-- Yarım kalan rezervasyon formu (sadece giriş yapmamış kullanıcı) -->
+@guest
+    <div class="mt-4 p-3 border rounded bg-light">
+        <h6>Şiparişiniz yarım kaldıysa:</h6>
+        <p>Rezervasyon ID'nizi girin ve devam edin.</p>
+        <form action="{{ route('reservation.resume') }}" method="POST" class="d-flex gap-2">
+            @csrf
+            <input type="text" name="reservation_id" class="form-control" placeholder="Rezervasyon ID">
+            <button type="submit" class="btn btn-primary">Devam Et</button>
+        </form>
+    </div>
+@endguest
+
 
 
 <
