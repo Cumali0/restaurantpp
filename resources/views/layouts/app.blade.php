@@ -11,7 +11,10 @@
 <!-- Main Content -->
 <main>
     @yield('content')
+
 </main>
+
+
 
 <!-- Footer -->
 @include('partials.footer')
@@ -29,8 +32,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
-
-
 @stack('scripts')
+
+
+
 </body>
 </html>

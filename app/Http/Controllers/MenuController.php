@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Menu;
 use Illuminate\Http\Request;
-use App\Models\Category;
-use App\Models\Product;
 
 class MenuController extends Controller
 {
-    // Tüm kategorileri göster
-    public function index()
+// MenuController.php
+    public function listForPreorder()
     {
-        $categories = Category::all();
-        return view('menu.index', compact('categories'));
+        $menus = Menu::all();
+        return view('preorder.menu_partial', compact('menus')); // sadece menü kartlarını içeren blade
     }
 
-    // Seçilen kategoriye ait ürünleri göster
-    public function categoryProducts($id)
+    public function index()
     {
-        $category = Category::findOrFail($id);
-        $products = Product::where('category_id', $id)->get();
-        return view('menu.products', compact('category', 'products'));
+        $menus = Menu::where('active', 1)->get();
+
+        return view('index', compact('menus')); // resources/views/index.blade.php dosyasına gönderiyoruz
     }
+
+
 }

@@ -10,7 +10,7 @@ class ProductsSeeder extends Seeder
     public function run(): void
     {
         DB::table('products')->insert([
-            [
+            [   'name'=>  'Çorba ',
                 'category_id' => 1, // Çorba
                 'description' => 'Ev yapımı mercimek çorbası.',
                 'img' => null,
@@ -19,6 +19,7 @@ class ProductsSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'name'=>  'Izgara Tavuk ',
                 'category_id' => 2, // Ana Yemek
                 'description' => 'Izgara tavuk, sebzelerle.',
                 'img' => null,
@@ -27,6 +28,7 @@ class ProductsSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'name'=>  'Baklava ',
                 'category_id' => 3, // Tatlı
                 'description' => 'Tatlı baklava, ev yapımı.',
                 'img' => null,
@@ -35,6 +37,7 @@ class ProductsSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'name'=>  'Ayran ',
                 'category_id' => 4, // İçecek
                 'description' => 'Soğuk ayran içecek.',
                 'img' => null,

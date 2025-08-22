@@ -159,7 +159,7 @@
                     Rezervasyon
                 </h5>
                 <h1 class="text-white mb-4">Online Masa Kaydı</h1>
-                <form id="reservationForm" action="" method="POST">
+                <form id="reservationForm" action="{{ route('reservations.store.public') }}" method="POST">
 
                     @csrf
                     <div class="row g-3">
@@ -224,7 +224,7 @@
                             <!-- Tarih & Saat -->
                         <div class="col-md-6">
                             <div class="form-floating date" id="date3">
-                                <input type="text" class="form-control" id="datetimepicker" name="datetime" placeholder="Date & Time" required autocomplete="off">
+                                <input  type="text" class="form-control" id="datetimepicker" name="datetime" placeholder="Date & Time" required autocomplete="off">
                                 <label for="datetimepicker">Tarih & Saat</label>
                             </div>
                         </div>
@@ -283,8 +283,10 @@
                             @endif
                         </div>
                     </div>
+
+                    <div id="reservationResult"></div>
                 </form>
-                <div id="reservationResult"></div>
+
             </div>
         </div>
     </div>
@@ -397,7 +399,78 @@
 
 
 
+
+
+
+
+
 <!--Team Section End -->
 
 
 @endsection
+
+
+
+@push('styles')
+    <style>
+        #tables-container { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;}
+        .table {padding:10px 15px; border-radius:5px; color:white; background-color:#0d6efd; cursor:pointer; user-select:none; text-align:center;}
+        .table.selected { background-color:#198754; }
+        .table.booked { opacity:0.6; cursor:not-allowed; }
+    </style>
+@endpush
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tablesContainer = document.getElementById('tables-container');
+            const selectedInput = document.getElementById('selected_table_id');
+            let selectedTableId = null;
+
+            function renderTables(tables) {
+                tablesContainer.innerHTML = '';
+                tables.forEach(table => {
+                    const div = document.createElement('div');
+                    div.className = table.booked ? 'table booked' : 'table';
+                    div.textContent = 'Masa ' + table.name;
+                    div.onclick = () => {
+                        if(table.booked) return;
+                        if(selectedTableId === table.id){
+                            selectedTableId = null;
+                            div.classList.remove('selected');
+                            selectedInput.value = '';
+                        } else {
+                            selectedTableId = table.id;
+                            document.querySelectorAll('.table.selected').forEach(el=>el.classList.remove('selected'));
+                            div.classList.add('selected');
+                            selectedInput.value = table.id;
+                        }
+                    };
+                    tablesContainer.appendChild(div);
+                });
+            }
+
+            function fetchAvailableTables(datetime){
+                const duration = 90;
+                fetch(`/tables-availability?datetime=${encodeURIComponent(datetime)}&duration=${duration}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.error){ tablesContainer.innerHTML = `<p class="text-danger">${data.error}</p>`; return; }
+                        const allTables = [...(data.available || []), ...(data.booked || []).map(t=>({...t, booked:true}))];
+                        renderTables(allTables);
+                    })
+                    .catch(err=>{
+                        console.error(err);
+                        tablesContainer.innerHTML = '<p class="text-danger">Masalar yüklenemedi, tekrar deneyin.</p>';
+                    });
+            }
+
+            document.getElementById('datetimepicker').addEventListener('change', ()=>{
+                const val = document.getElementById('datetimepicker').value.trim();
+                if(val) fetchAvailableTables(val);
+            });
+
+            tablesContainer.innerHTML = '<p class="text-white">Lütfen önce tarih ve saati seçiniz.</p>';
+        });
+    </script>
+@endpush
