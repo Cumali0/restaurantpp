@@ -13,10 +13,13 @@
             @forelse($products as $product)
                 <div class="col-lg-3 col-md-6">
                     <div class="card h-100 shadow-sm text-center">
-                        <img src="{{ asset('img/' . $product->img) }}" class="card-img-top" alt="{{ $product->description }}">
+                        @if($product->img)
+                            <img src="{{ asset('storage/' . $product->img) }}" class="card-img-top" alt="{{ $product->name }}">
+                        @endif
                         <div class="card-body">
-                            <h5 class="card-title">{{ $product->description }}</h5>
+                            <h5 class="card-title">{{ $product->name }}</h5>
                             <p class="card-text">{{ $product->price }} ₺</p>
+                            <p class="card-text">{{ $product->description }}</p>
                         </div>
                     </div>
                 </div>

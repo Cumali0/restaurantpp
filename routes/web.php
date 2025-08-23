@@ -1,14 +1,14 @@
 <?php
 use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MenuController;
+
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
-
+use App\Http\Controllers\CategoryController;
 
 
 
@@ -20,8 +20,6 @@ Route::get('/', function () {
 })->name('home');
 
 
-Route::get('/menu', [MenuController::class, 'index'])->name('menu.index'); // Tüm kategorileri göster
-Route::get('/menu/{id}', [MenuController::class, 'categoryProducts'])->name('menu.products'); // Seçilen kategori ürünleri
 
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -153,14 +151,22 @@ Route::prefix('admin')->group(function () {
 // AJAX: Sepet içeriği alma
 Route::get('reservation/preorder/{token}/cart', [ReservationController::class, 'getCart'])->name('reservation.getCart');
 
-// Admin ürün yönetimi
+
+
+
 Route::prefix('admin')->name('admin.')->group(function () {
+    // Kategori listeleme
+    Route::resource('categories', CategoryController::class)->only(['index']);
 
-    // Ürünler
-    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-    Route::get('products/{id}/edit', [ProductController::class,'edit']);
-    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
-
+    // Ürünler (tek sayfa CRUD)
+    Route::get('products', [ProductController::class, 'index'])->name('products.index');
+    Route::post('products', [ProductController::class, 'store'])->name('products.store');
+    Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
+    Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 });
+
+// Menü sayfası: tüm kategoriler
+Route::get('/menu', [ProductController::class, 'showMenu'])->name('menu.index');
+
+// Seçilen kategoriye ait ürünler
+Route::get('/menu/{id}', [ProductController::class, 'categoryProducts'])->name('menu.products');

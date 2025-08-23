@@ -4,11 +4,6 @@
 
 @section('content')
     <div class="container py-5">
-        <div class="text-center mb-5">
-            <h5 class="section-title ff-secondary text-primary fw-normal">Menümüz</h5>
-            <h1 class="mb-4">Kategoriler</h1>
-        </div>
-
         <div class="row g-4">
             @foreach($categories as $category)
                 <div class="col-lg-3 col-md-6">

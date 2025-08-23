@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -9,86 +10,120 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-public function index(Request $request)
-{
-$query = Product::with('category');
+    // Ürün listeleme
+    public function index(Request $request)
+    {
+        $categories = Category::pluck('name','id');
 
-// Filtreleme
-if($request->name) $query->where('name','like','%'.$request->name.'%');
-if($request->category) $query->where('category_id',$request->category);
-if($request->min_price) $query->where('price','>=',$request->min_price);
-if($request->max_price) $query->where('price','<=',$request->max_price);
+        $query = Product::with('category');
 
-$products = $query->paginate(12);
-$categories = Category::pluck('name','id');
+        if ($request->filled('name')) {
+            $query->where('name', 'like', "%{$request->name}%");
+        }
 
-return view('admin.products.index',compact('products','categories'));
-}
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
 
-public function store(Request $request)
-{
-$request->validate([
-'name'=>'required|string|max:255',
-'price'=>'required|numeric|min:0',
-'category_id'=>'required|exists:categories,id',
-'image'=>'nullable|image|max:2048'
-]);
+        $products = $query->paginate(12)->withQueryString();
 
-$product = new Product();
-$product->name = $request->name;
-$product->description = $request->description;
-$product->price = $request->price;
-$product->category_id = $request->category_id;
+        return view('admin.products.index', compact('products', 'categories'));
+    }
 
-if($request->hasFile('image')){
-$path = $request->file('image')->store('products','public');
-$product->image = $path;
-}
+    // Yeni ürün ekleme
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'image' => 'nullable|image|max:2048',
+        ]);
 
-$product->save();
+        if($request->hasFile('image')){
+            $data['img'] = $request->file('image')->store('products', 'public');
+        }
 
-return response()->json(['success'=>true,'message'=>'Ürün eklendi']);
-}
+        $product = Product::create($data);
 
-public function edit($id)
-{
-$product = Product::findOrFail($id);
-return response()->json($product);
-}
+        return response()->json([
+            'success' => 'Ürün kaydedildi!',
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'category_id' => $product->category_id,
+                'category_name' => $product->category->name,
+                'img' => $product->img
+            ]
+        ]);
+    }
 
-public function update(Request $request,$id)
-{
-$product = Product::findOrFail($id);
+    // Ürün güncelleme
+    public function update(Request $request, Product $product)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'image' => 'nullable|image|max:2048',
+        ]);
 
-$request->validate([
-'name'=>'required|string|max:255',
-'price'=>'required|numeric|min:0',
-'category_id'=>'required|exists:categories,id',
-'image'=>'nullable|image|max:2048'
-]);
+        if($request->hasFile('image')){
+            // Eski resmi sil
+            if($product->img && Storage::disk('public')->exists($product->img)){
+                Storage::disk('public')->delete($product->img);
+            }
+            $data['img'] = $request->file('image')->store('products', 'public');
+        }
 
-$product->name = $request->name;
-$product->description = $request->description;
-$product->price = $request->price;
-$product->category_id = $request->category_id;
+        $product->update($data);
 
-if($request->hasFile('image')){
-if($product->image) Storage::disk('public')->delete($product->image);
-$path = $request->file('image')->store('products','public');
-$product->image = $path;
-}
+        return response()->json([
+            'success' => 'Ürün güncellendi!',
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'category_id' => $product->category_id,
+                'category_name' => $product->category->name,
+                'img' => $product->img
+            ]
+        ]);
+    }
 
-$product->save();
+    // Ürün silme
+    public function destroy(Product $product)
+    {
+        if($product->img && Storage::disk('public')->exists($product->img)){
+            Storage::disk('public')->delete($product->img);
+        }
 
-return response()->json(['success'=>true,'message'=>'Ürün güncellendi']);
-}
+        $product->delete();
 
-public function destroy($id)
-{
-$product = Product::findOrFail($id);
-if($product->image) Storage::disk('public')->delete($product->image);
-$product->delete();
+        return response()->json(['success' => 'Ürün silindi!']);
+    }
 
-return response()->json(['success'=>true,'message'=>'Ürün silindi']);
-}
+
+
+    // Tüm kategorileri göster
+    public function showMenu()
+    {
+        $categories = Category::all();
+        return view('menu.index', compact('categories'));
+    }
+
+    // Belirli kategoriye ait ürünler
+    public function categoryProducts($id)
+    {
+        $category = Category::findOrFail($id);
+        $products = Product::where('category_id', $id)->get();
+
+        // Burada artık menu.products view kullanılacak
+        return view('menu.products', compact('category', 'products'));
+    }
 }

@@ -10,7 +10,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
-            $table->text('description');
+            $table->text('description')->nullable(); // artık boş bırakılabilir
             $table->string('img')->nullable();
             $table->decimal('price', 10, 2);
             $table->timestamps();
