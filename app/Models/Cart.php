@@ -10,6 +10,8 @@ class Cart extends Model
     use HasFactory;
 
     protected $fillable = [
+        'reservation_id',
+        'token',
         'order_id',
         'total_price',
     ];

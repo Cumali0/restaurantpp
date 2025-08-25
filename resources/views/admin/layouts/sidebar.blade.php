@@ -36,7 +36,7 @@
             <span class="message-count">26</span>
         </a>
 
-        <a href="{{ route('admin.menus.index') }}" class="{{ request()->routeIs('admin.menus.index') ? 'active' : '' }}">
+        <a href="{{ route('admin.products.index') }}" class="{{ request()->routeIs('admin.products.index') ? 'active' : '' }}">
             <span class="material-icons-sharp">inventory</span>
             <h3>Ürün Yönetimi</h3>
         </a>
@@ -46,7 +46,7 @@
             <h3>Raporlar</h3>
         </a>
 
-        <a class="nav-link" href="{{ route('admin.profile.edit') }}">
+        <a href="#">
             <span class="material-icons-sharp">settings</span>
             <h3>Ayarlar</h3>
         </a>

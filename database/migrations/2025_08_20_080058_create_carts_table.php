@@ -8,7 +8,9 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+            $table->string('token')->nullable();
+            $table->foreignId('reservation_id')->nullable()->constrained('reservations')->onDelete('cascade');
+            $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('cascade');
             $table->decimal('total_price', 10, 2)->default(0);
             $table->timestamps();
         });

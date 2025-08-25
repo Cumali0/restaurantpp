@@ -6,7 +6,7 @@
     <div class="container py-5">
         <div class="text-center mb-5">
             <h5 class="section-title ff-secondary text-primary fw-normal">{{ $category->name }}</h5>
-            <h1 class="mb-4">Lezzetli Yemeklerimiz</h1>
+            <h1 class="mb-4">Kalite</h1>
         </div>
 
         <div class="row g-4">

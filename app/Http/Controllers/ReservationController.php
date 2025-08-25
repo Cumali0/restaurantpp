@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\ReservationStatusMail;
+
 use App\Models\Table;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,16 +16,20 @@ class ReservationController extends Controller
 {
     public function storePublic(Request $request)
     {
-        $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'name' => 'required|string|max:255',
-            'surname' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'datetime' => 'required|date_format:Y-m-d H:i',
-            'people' => 'required|integer|min:1',
-            'message' => 'nullable|string',
-            'duration' => 'nullable|integer|min:15|max:240',
-            'is_preorder' => 'nullable|boolean'
+
+            $request->validate([
+                'table_id' => 'required|exists:tables,id',
+                'name' => 'required|string|max:255',
+                'surname' => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'email' => 'required|email|max:255',
+                'datetime' => 'required|date_format:Y-m-d H:i',
+                'people' => 'required|integer|min:1',
+                'message' => 'nullable|string',
+                'duration' => 'nullable|integer|min:15|max:240',
+                'is_preorder' => 'nullable|boolean'
+
+
         ]);
 
         $start = $request->datetime;
@@ -34,6 +39,7 @@ class ReservationController extends Controller
             'table_id' => $request->table_id,
             'name' => $request->name,
             'surname' => $request->surname,
+            'phone' => $request->phone,
             'email' => $request->email,
             'datetime' => $start,
             'end_datetime' => $end,
@@ -176,6 +182,7 @@ class ReservationController extends Controller
                 'table_id' => $request->table_id,
                 'name' => $request->name,
                 'surname' => $request->surname,
+                'phone' => $request->phone, // ✅ eklendi
                 'email' => $request->email,
                 'datetime' => $start,
                 'end_datetime' => $end,
@@ -183,9 +190,9 @@ class ReservationController extends Controller
                 'message' => $request->message,
                 'status' => 'reserved',
                 'is_preorder' => $request->has('is_preorder'),
-                'total_price' => 0,
-                'payment_status' => 'unpaid',
+                'preorder_token' => Str::random(32), // ✅ varsa ön sipariş için
             ]);
+
 
 // Eğer ön sipariş seçilmişse, preorder sayfasına yönlendir
             if ($request->ajax()) {

@@ -191,30 +191,29 @@
                             </div>
                         @endguest
 
-
                             @auth
-                                <!-- Giriş yapmış kullanıcı: alanlar dolu ve disable -->
+                                <!-- Giriş yapmış kullanıcı: alanlar dolu ve readonly -->
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <input type="text" class="form-control" id="name" name="name" value="{{ optional(auth()->user())->name }}" disabled>
+                                        <input type="text" class="form-control" id="name" name="name" value="{{ optional(auth()->user())->name }}" readonly>
                                         <label for="name">Ad</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <input type="text" class="form-control" id="surname" name="surname" value="{{ optional(auth()->user())->surname }}" disabled>
+                                        <input type="text" class="form-control" id="surname" name="surname" value="{{ optional(auth()->user())->surname }}" readonly>
                                         <label for="surname">Soyad</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <input type="text" class="form-control" id="phone" name="phone" value="{{ optional(auth()->user())->phone }}" disabled>
+                                        <input type="text" class="form-control" id="phone" name="phone" value="{{ optional(auth()->user())->phone }}" readonly>
                                         <label for="phone">Telefon</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <input type="email" class="form-control" id="email" name="email" value="{{ optional(auth()->user())->email }}" disabled>
+                                        <input type="email" class="form-control" id="email" name="email" value="{{ optional(auth()->user())->email }}" readonly>
                                         <label for="email">E-posta Adresi</label>
                                     </div>
                                 </div>
@@ -413,6 +412,17 @@
 
 @push('styles')
     <style>
+        table {
+            padding: 10px 15px;
+            border-radius: 5px;
+            color: white;
+            background-color: #0d6efd;
+            cursor: pointer;
+            text-align: center;
+            flex: 0 0 120px; /* sabit genişlik */
+            margin-bottom: 10px;
+        }
+
         #tables-container { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;}
         .table {padding:10px 15px; border-radius:5px; color:white; background-color:#0d6efd; cursor:pointer; user-select:none; text-align:center;}
         .table.selected { background-color:#198754; }
@@ -423,54 +433,160 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const tablesContainer = document.getElementById('tables-container');
-            const selectedInput = document.getElementById('selected_table_id');
             let selectedTableId = null;
 
-            function renderTables(tables) {
-                tablesContainer.innerHTML = '';
-                tables.forEach(table => {
-                    const div = document.createElement('div');
-                    div.className = table.booked ? 'table booked' : 'table';
-                    div.textContent = 'Masa ' + table.name;
-                    div.onclick = () => {
-                        if(table.booked) return;
-                        if(selectedTableId === table.id){
-                            selectedTableId = null;
-                            div.classList.remove('selected');
-                            selectedInput.value = '';
-                        } else {
-                            selectedTableId = table.id;
-                            document.querySelectorAll('.table.selected').forEach(el=>el.classList.remove('selected'));
-                            div.classList.add('selected');
-                            selectedInput.value = table.id;
-                        }
-                    };
-                    tablesContainer.appendChild(div);
-                });
+            // -----------------------------
+            // Flatpickr
+            // -----------------------------
+            const datetimeInput = document.getElementById('datetimepicker');
+
+            const fpInstance = flatpickr(datetimeInput, {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                time_24hr: true,
+                locale: "tr",
+                minDate: "today",
+                onChange: function(selectedDates, dateStr) {
+                    if(dateStr) fetchAvailableTables(dateStr);
+                    else clearTables();
+                    updateTimeLimits(selectedDates[0]);
+                }
+            });
+
+            function updateTimeLimits(selectedDate){
+                if(!selectedDate) return;
+                const day = selectedDate.getDay();
+                if(day === 0){ // Pazar
+                    fpInstance.set('minTime', "10:00");
+                    fpInstance.set('maxTime', "20:00");
+                } else { // Diğer günler
+                    fpInstance.set('minTime', "09:00");
+                    fpInstance.set('maxTime', "21:00");
+                }
             }
 
+            // -----------------------------
+            // Masalar
+            // -----------------------------
+            const tablesContainer = document.getElementById('tables-container');
+
             function fetchAvailableTables(datetime){
-                const duration = 90;
-                fetch(`/tables-availability?datetime=${encodeURIComponent(datetime)}&duration=${duration}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if(data.error){ tablesContainer.innerHTML = `<p class="text-danger">${data.error}</p>`; return; }
-                        const allTables = [...(data.available || []), ...(data.booked || []).map(t=>({...t, booked:true}))];
-                        renderTables(allTables);
+                fetch(`/tables-availability?datetime=${encodeURIComponent(datetime)}&duration=90`)
+                    .then(res=>res.json())
+                    .then(data=>{
+                        tablesContainer.innerHTML = '';
+                        selectedTableId = null;
+                        document.getElementById('selected_table_id').value = '';
+
+                        if(data.error){
+                            tablesContainer.innerHTML = `<p class="text-danger">${data.error}</p>`;
+                            return;
+                        }
+
+                        if((!data.available || !data.available.length) && (!data.booked || !data.booked.length)){
+                            tablesContainer.innerHTML = `<p class="text-white">Bu tarihte hiç masa bulunmamaktadır.</p>`;
+                            return;
+                        }
+
+                        (data.available || []).forEach(table=>{
+                            const div = document.createElement('div');
+                            div.className = 'table available';
+                            div.textContent = 'Masa ' + table.name;
+                            div.onclick = () => selectTable(table.id, div);
+                            tablesContainer.appendChild(div);
+                        });
+
+                        (data.booked || []).forEach(table=>{
+                            const div = document.createElement('div');
+                            div.className = 'table booked';
+                            div.textContent = 'Masa ' + table.name;
+                            tablesContainer.appendChild(div);
+                        });
                     })
                     .catch(err=>{
+                        tablesContainer.innerHTML = '<p class="text-danger">Masalar yüklenemedi, lütfen tekrar deneyin.</p>';
                         console.error(err);
-                        tablesContainer.innerHTML = '<p class="text-danger">Masalar yüklenemedi, tekrar deneyin.</p>';
                     });
             }
 
-            document.getElementById('datetimepicker').addEventListener('change', ()=>{
-                const val = document.getElementById('datetimepicker').value.trim();
-                if(val) fetchAvailableTables(val);
+            function selectTable(id, element){
+                if(element.classList.contains('booked')) return;
+
+                const selectedInput = document.getElementById('selected_table_id');
+
+                if(selectedTableId === id){
+                    selectedTableId = null;
+                    element.classList.remove('selected');
+                    selectedInput.value = '';
+                } else {
+                    selectedTableId = id;
+                    document.querySelectorAll('.table.selected').forEach(el=>el.classList.remove('selected'));
+                    element.classList.add('selected');
+                    selectedInput.value = id;
+                }
+            }
+
+            function clearTables(){
+                tablesContainer.innerHTML = '<p class="text-white">Lütfen önce tarih ve saati seçiniz.</p>';
+                selectedTableId = null;
+                document.getElementById('selected_table_id').value = '';
+            }
+
+            clearTables();
+
+            // -----------------------------
+            // Form submit
+            // -----------------------------
+            const reservationForm = document.getElementById('reservationForm');
+            const preorderCheckbox = document.getElementById('is_preorder');
+
+            reservationForm.addEventListener('submit', function(e){
+                e.preventDefault();
+
+                const formData = new FormData(reservationForm);
+                const datetimeValue = fpInstance.input.value.trim();
+
+                if(!selectedTableId || !datetimeValue){
+                    document.getElementById('reservationResult').innerHTML =
+                        '<p style="color:red;">Lütfen masa ve tarih/saat seçiniz.</p>';
+                    return;
+                }
+
+                formData.set('table_id', selectedTableId);
+                formData.set('datetime', datetimeValue);
+
+                fetch(reservationForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                    .then(res=>res.json())
+                    .then(data=>{
+                        if(data.success){
+                            Swal.fire({icon:'success', title:'Başarılı', text:data.message, timer:2000, showConfirmButton:false})
+                                .then(()=>{
+                                    if(preorderCheckbox.checked && data.preorder_url){
+                                        window.location.href = data.preorder_url;
+                                    } else {
+                                        reservationForm.reset();
+                                        clearTables();
+                                    }
+                                });
+                        } else {
+                            Swal.fire({icon:'error', title:'Hata', text:data.message||'Rezervasyon yapılamadı.'});
+                        }
+                    })
+                    .catch(err=>{
+                        console.error(err);
+                        document.getElementById('reservationResult').innerHTML =
+                            '<p style="color:red;">Sunucu hatası oluştu.</p>';
+                    });
             });
 
-            tablesContainer.innerHTML = '<p class="text-white">Lütfen önce tarih ve saati seçiniz.</p>';
         });
     </script>
+
 @endpush
