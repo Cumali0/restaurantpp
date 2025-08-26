@@ -22,10 +22,11 @@ class AdminController extends Controller
             $user = Auth::user();
 
             // Sadece admin (id = 1) giriş yapabilir
-            if ($user->id !== 1) {
+            if ($user->role_id != 1) {
                 Auth::logout();
                 return back()->withErrors(['email' => 'Sadece admin giriş yapabilir.']);
             }
+
 
             $request->session()->regenerate();
             return redirect()->intended(route('dashboard'));

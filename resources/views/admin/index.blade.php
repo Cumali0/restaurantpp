@@ -67,12 +67,13 @@
                 <h3>Ürün Yönetimi</h3>
             </a>
 
-            <a href="#">
+            <a href="{{ route('admin.reports.form') }}">
                 <span class="material-icons-sharp">report_gmailerrorred</span>
                 <h3>Rapor</h3>
             </a>
 
-            <a href="#">
+
+            <a href="{{ route('admin.profile.edit') }}">
                 <span class="material-icons-sharp">settings</span>
                 <h3>Ayarlar</h3>
             </a>

@@ -50,6 +50,7 @@ class ReservationController extends Controller
             'total_price' => 0,
             'payment_status' => 'unpaid',
             'preorder_token' => Str::random(32), // random token
+            'user_id' => auth()->id(),
         ]);
 
         return response()->json([
@@ -287,4 +288,49 @@ class ReservationController extends Controller
             'booked' => $booked,
         ]);
     }
+
+// Kullanıcının kendi rezervasyonları
+    public function myReservations()
+    {
+        $reservations = Reservation::where('user_id', auth()->id())->orderBy('datetime', 'asc')->get();
+        return view('user.reservations.index', compact('reservations'));
+    }
+
+
+    // Rezervasyonu güncelle (mesaj ve kişi sayısı)
+    public function update(Request $request, $id)
+    {
+        $reservation = Reservation::findOrFail($id);
+
+        if ($reservation->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'people' => 'required|integer|min:1|max:'.$reservation->table->capacity,
+            'message' => 'nullable|string|max:255',
+        ]);
+
+        $reservation->people = $request->people;
+        $reservation->message = $request->message;
+        $reservation->save();
+
+        return response()->json(['success' => true, 'message' => 'Rezervasyon güncellendi']);
+    }
+
+// Rezervasyonu iptal et
+    public function cancel($id)
+    {
+        $reservation = Reservation::findOrFail($id);
+
+        if ($reservation->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $reservation->delete();
+
+        return response()->json(['success' => true, 'message' => 'Rezervasyon iptal edildi']);
+    }
+
+
 }

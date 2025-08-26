@@ -27,4 +27,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function reservation()
+    {
+        return $this->belongsTo(Reservation::class);
+    }
 }

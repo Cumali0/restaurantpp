@@ -1,7 +1,6 @@
 <?php
 use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\UserController;
@@ -10,7 +9,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PreorderController;
-
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\PaymentController;
 
 
@@ -217,3 +217,58 @@ Route::get('/orders', [OrderController::class, 'index'])
 Route::get('/orders/{order}', [OrderController::class, 'show'])
     ->middleware('auth')
     ->name('orders.show');
+
+
+
+Route::middleware('auth')->group(function() {
+    Route::get('/my-reservations', [ReservationController::class, 'myReservations'])->name('reservations.my');
+
+    Route::post('/my-reservations/{id}/update', [ReservationController::class, 'update'])->name('reservations.update');
+    Route::post('/my-reservations/{id}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
+});
+
+
+
+
+
+
+
+Route::middleware('auth')->group(function () {
+    // Sipariş listesi
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+
+    // Sipariş detayı
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+
+    // Siparişi iptal et
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+
+    // Siparişi düzenle (ön sipariş sayfasına yönlendirme)
+    Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+
+    // Siparişi devam ettir (ön sipariş sayfasına yönlendirme)
+    Route::get('/orders/{order}/continue', [OrderController::class, 'continue'])->name('orders.continue');
+
+    // Ön siparişi kaydet / güncelle
+    Route::post('/preorder/save', [OrderController::class, 'preorderSave'])->name('preorder.save');
+});
+
+
+Route::middleware(['auth'])->group(function () {
+    // Rapor formu
+    Route::get('/admin/reports', [ReportController::class, 'showForm'])->name('admin.reports.form');
+
+    // PDF oluşturma
+    Route::get('/admin/reports/generate', [ReportController::class, 'generate'])->name('admin.reports.generate');
+});
+
+
+Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
+
+    // Profil görüntüleme (GET)
+    Route::get('profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
+
+    // Profil güncelleme (POST)
+    Route::post('profile', [AdminProfileController::class, 'update'])->name('profile.update');
+
+});

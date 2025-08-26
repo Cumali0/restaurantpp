@@ -41,12 +41,13 @@
             <h3>Ürün Yönetimi</h3>
         </a>
 
-        <a href="#">
+        <a href="{{ route('admin.reports.form') }}" class="{{ request()->routeIs('admin.reports.form') ? 'active' : '' }}">
             <span class="material-icons-sharp">report_gmailerrorred</span>
             <h3>Raporlar</h3>
         </a>
 
-        <a href="#">
+
+            <a href="{{ route('admin.profile.edit') }}" class="{{ request()->routeIs('admin.profile.edit') ? 'active' : '' }}">
             <span class="material-icons-sharp">settings</span>
             <h3>Ayarlar</h3>
         </a>

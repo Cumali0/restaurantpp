@@ -41,4 +41,9 @@ class Reservation extends Model
     {
         return $this->hasMany(Order::class);
     }
+    protected $casts = [
+        'datetime' => 'datetime',
+        'end_datetime' => 'datetime',
+    ];
+
 }

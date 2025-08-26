@@ -26,4 +26,8 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+    protected $casts = [
+        'order_time' => 'datetime',
+    ];
+
 }
