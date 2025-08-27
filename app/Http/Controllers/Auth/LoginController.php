@@ -30,7 +30,7 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             // Eğer giriş yapan admin ise logout yap ve hata ver
-            if (Auth::user()->id === 1) { // Admin ID 1 ise
+            if (Auth::user()->role_id == 1) { // role_id = 1 => admin
                 Auth::logout();
                 return back()->withErrors([
                     'email' => 'Bu alan sadece normal kullanıcılar içindir.'

@@ -293,20 +293,54 @@
 
 <!--Reservation Section End-->
 
-
-
-<!-- Yarım kalan rezervasyon formu (sadece giriş yapmamış kullanıcı) -->
 @guest
     <div class="mt-4 p-3 border rounded bg-light">
         <h6>Şiparişiniz yarım kaldıysa:</h6>
         <p>Rezervasyon ID'nizi girin ve devam edin.</p>
-        <form action="{{ route('reservation.resume') }}" method="POST" class="d-flex gap-2">
-            @csrf
-            <input type="text" name="reservation_id" class="form-control" placeholder="Rezervasyon ID">
-            <button type="submit" class="btn btn-primary">Devam Et</button>
-        </form>
+        <div class="d-flex gap-2">
+            <input type="text" id="reservation_id_input" class="form-control" placeholder="Rezervasyon ID">
+            <button type="button" id="guest_resume_btn" class="btn btn-primary">Devam Et</button>
+        </div>
+        <p id="guest_message" class="mt-2 text-success"></p>
     </div>
+
+    <script>
+        document.getElementById('guest_resume_btn').addEventListener('click', async () => {
+            const reservationId = document.getElementById('reservation_id_input').value;
+            const messageEl = document.getElementById('guest_message');
+
+            if(!reservationId) {
+                messageEl.textContent = 'Lütfen rezervasyon ID girin!';
+                messageEl.classList.remove('text-success');
+                messageEl.classList.add('text-danger');
+                return;
+            }
+
+            const res = await fetch('{{ route("reservation.generateToken") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ reservation_id: reservationId })
+            });
+
+            const data = await res.json();
+
+            if(data.success || data.message){
+                messageEl.textContent = data.message || 'Yeni token emailinize gönderildi.';
+                messageEl.classList.remove('text-danger');
+                messageEl.classList.add('text-success');
+            } else {
+                messageEl.textContent = 'Bir hata oluştu!';
+                messageEl.classList.remove('text-success');
+                messageEl.classList.add('text-danger');
+            }
+        });
+    </script>
 @endguest
+
+
 
 
 

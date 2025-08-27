@@ -233,24 +233,11 @@ Route::middleware('auth')->group(function() {
 
 
 
-Route::middleware('auth')->group(function () {
-    // Sipariş listesi
-    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-
-    // Sipariş detayı
-    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
-
-    // Siparişi iptal et
-    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
-
-    // Siparişi düzenle (ön sipariş sayfasına yönlendirme)
-    Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
-
-    // Siparişi devam ettir (ön sipariş sayfasına yönlendirme)
-    Route::get('/orders/{order}/continue', [OrderController::class, 'continue'])->name('orders.continue');
-
-    // Ön siparişi kaydet / güncelle
-    Route::post('/preorder/save', [OrderController::class, 'preorderSave'])->name('preorder.save');
+Route::prefix('orders')->middleware('auth')->group(function() {
+    Route::get('/', [OrderController::class,'index'])->name('orders.index');
+    Route::get('/{order}', [OrderController::class,'show'])->name('orders.show');
+    Route::post('/{order}/cancel', [OrderController::class,'cancel'])->name('orders.cancel');
+    Route::get('/continue-cart/{cart}', [OrderController::class,'continueCart'])->name('orders.continueCart');
 });
 
 
@@ -272,3 +259,16 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('profile', [AdminProfileController::class, 'update'])->name('profile.update');
 
 });
+
+
+Route::post('/preorder/invalidate-token/{token}', [PreorderController::class, 'invalidateToken']);
+
+Route::post('/reservation/generate-token', [PreorderController::class, 'generateNewToken'])
+    ->name('reservation.generateToken');
+
+// Yarım kalan siparişleri devam ettirme
+Route::get('/orders/{order}/continue', [OrderController::class, 'continue'])
+    ->name('orders.continue')
+    ->middleware('auth');
+
+

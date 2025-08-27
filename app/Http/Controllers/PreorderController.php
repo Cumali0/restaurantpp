@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PreorderLinkMail;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
@@ -11,6 +12,8 @@ use App\Models\Reservation;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 
 class PreorderController extends Controller
@@ -177,6 +180,42 @@ class PreorderController extends Controller
         $cart->total_price = $cart->items->sum('total_price');
         $cart->save();
     }
+// Token silme (sayfa kapandığında)
+    public function invalidateToken($token, Request $request)
+    {
+        // Token ile rezervasyonu bul
+        $reservation = Reservation::where('preorder_token', $token)->first();
+
+        if($reservation) {
+            // Token'ı sil
+            $reservation->preorder_token = null;
+            $reservation->save();
+
+            return response()->json(['success' => true, 'message' => 'Token silindi.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Token bulunamadı.'], 404);
+    }
+    // Kayıtlı kullanıcı veya guest için yeni token oluşturma
+    public function generateNewToken(Request $request)
+    {
+        $reservation = Reservation::findOrFail($request->reservation_id);
+
+        // Yeni token oluştur
+        $token = Str::uuid();
+        $reservation->preorder_token = $token;
+        $reservation->save();
+
+
+        if (!$reservation->user_id) {
+            Mail::to($reservation->email)->send(new PreorderLinkMail($token));
+            return response()->json(['message' => 'Yeni token emailinize gönderildi']);
+        }
+
+        // Kayıtlı kullanıcı ise direkt yönlendir
+        return redirect()->route('reservation.preorder', ['token' => $token]);
+    }
+
 
 
 }

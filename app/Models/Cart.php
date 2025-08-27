@@ -26,4 +26,11 @@ class Cart extends Model
     {
         return $this->hasMany(CartItem::class);
     }
+
+    // Cart → Reservation ilişkisi
+    public function reservation()
+    {
+        return $this->belongsTo(Reservation::class);
+    }
+
 }

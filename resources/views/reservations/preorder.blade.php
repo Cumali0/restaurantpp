@@ -82,7 +82,6 @@
         <button id="cancel-order">İptal</button>
     </div>
 </div>
-
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const productContainer = document.getElementById('product-container');
@@ -93,11 +92,17 @@
         const reservationToken = document.getElementById('reservation_token').value;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+        // --- SESSION STORAGE TOKEN SAKLAMA ---
+        if (!sessionStorage.getItem('orderToken')) {
+            sessionStorage.setItem('orderToken', reservationToken);
+        }
+
         let cart = [];
 
         // --- Backend'den cart yükle ---
         async function loadCart() {
-            const res = await fetch(`/preorder/get-cart/${reservationToken}`);
+            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
+            const res = await fetch(`/preorder/get-cart/${tokenToUse}`);
             const data = await res.json();
             cart = data.items.map(i => ({
                 cart_item_id: i.id,
@@ -108,6 +113,23 @@
             }));
             updateCartDisplay();
         }
+
+        // --- Sayfa kapanınca veya başka sayfaya gidince token sil ---
+        window.addEventListener('pagehide', function (e) {
+            // sayfa back/forward cache’den geliyorsa silme
+            if (e.persisted) return;
+
+            // navigation API ile reload kontrolü
+            const nav = performance.getEntriesByType("navigation")[0];
+            if(nav && nav.type === "reload") return; // yenilemede silme
+
+            const tokenToDelete = sessionStorage.getItem('orderToken');
+            if(tokenToDelete){
+                const blob = new Blob([JSON.stringify({ _token: csrfToken })], { type: 'application/json' });
+                navigator.sendBeacon(`/preorder/invalidate-token/${tokenToDelete}`, blob);
+                sessionStorage.removeItem('orderToken');
+            }
+        });
 
         // --- Ürünleri render et ---
         const categories = @json($categories);
@@ -134,18 +156,18 @@
                 const div = document.createElement('div');
                 div.className = 'product-item';
                 div.innerHTML = `
-                <img src="{{ asset('storage') }}/${p.img}" alt="${p.name}">
-                <div class="product-info">
-                    <strong>${p.name}</strong>
-                    <span class="price">${p.price}</span>
-                    <div style="display:flex; gap:5px; align-items:center;">
-                        <button class="decrease">-</button>
-                        <input type="number" min="1" value="1" class="product-quantity" data-id="${p.id}" style="width:40px; text-align:center;"/>
-                        <button class="increase">+</button>
-                    </div>
-                    <button class="add-to-cart" data-id="${p.id}">Sepete Ekle</button>
-                </div>
-            `;
+<img src="{{ asset('storage') }}/${p.img}" alt="${p.name}">
+<div class="product-info">
+    <strong>${p.name}</strong>
+    <span class="price">${p.price}</span>
+    <div style="display:flex; gap:5px; align-items:center;">
+        <button class="decrease">-</button>
+        <input type="number" min="1" value="1" class="product-quantity" data-id="${p.id}" style="width:40px; text-align:center;"/>
+        <button class="increase">+</button>
+    </div>
+    <button class="add-to-cart" data-id="${p.id}">Sepete Ekle</button>
+</div>
+`;
                 productContainer.appendChild(div);
             });
         }
@@ -167,15 +189,15 @@
             cart.forEach((i, idx) => {
                 const li = document.createElement('li');
                 li.innerHTML = `
-                ${i.name}
-                <div class="cart-controls">
-                    <button class="decrease" data-idx="${idx}">-</button>
-                    ${i.quantity}
-                    <button class="increase" data-idx="${idx}">+</button>
-                    - ${(i.price*i.quantity).toFixed(2)}₺
-                    <button class="remove" data-idx="${idx}">X</button>
-                </div>
-            `;
+${i.name}
+<div class="cart-controls">
+    <button class="decrease" data-idx="${idx}">-</button>
+    ${i.quantity}
+    <button class="increase" data-idx="${idx}">+</button>
+    - ${(i.price*i.quantity).toFixed(2)}₺
+    <button class="remove" data-idx="${idx}">X</button>
+</div>
+`;
                 cartItems.appendChild(li);
             });
             cartTotal.textContent = cart.reduce((sum,i)=>sum+i.price*i.quantity,0).toFixed(2);
@@ -206,7 +228,8 @@
 
         // --- Backend ile senkron ---
         async function addToCart(productId, quantity){
-            const res = await fetch(`/preorder/add/${reservationToken}`,{
+            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
+            const res = await fetch(`/preorder/add/${tokenToUse}`,{
                 method:'POST',
                 headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken},
                 body:JSON.stringify({product_id:productId, quantity})
@@ -225,7 +248,8 @@
         }
 
         async function updateBackendCart(cart_item_id, quantity){
-            await fetch(`/preorder/update-item/${reservationToken}`,{
+            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
+            await fetch(`/preorder/update-item/${tokenToUse}`,{
                 method:'POST',
                 headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken},
                 body:JSON.stringify({cart_item_id, quantity})
@@ -233,7 +257,8 @@
         }
 
         async function removeFromBackendCart(cart_item_id){
-            await fetch(`/preorder/remove/${reservationToken}`,{
+            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
+            await fetch(`/preorder/remove/${tokenToUse}`,{
                 method:'POST',
                 headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken},
                 body:JSON.stringify({cart_item_id})
@@ -241,7 +266,8 @@
         }
 
         document.getElementById('empty-cart').onclick=async()=>{
-            await fetch(`/preorder/empty/${reservationToken}`,{method:'POST', headers:{'X-CSRF-TOKEN':csrfToken}});
+            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
+            await fetch(`/preorder/empty/${tokenToUse}`,{method:'POST', headers:{'X-CSRF-TOKEN':csrfToken}});
             cart=[];
             updateCartDisplay();
         };
@@ -266,8 +292,9 @@
         cancelOrder.addEventListener('click', ()=>orderModal.style.display='none');
 
         confirmOrder.addEventListener('click', async ()=>{
+            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
             const payment = document.querySelector('input[name="payment"]:checked').value;
-            const res = await fetch(`/preorder/finalize/${reservationToken}`,{
+            const res = await fetch(`/preorder/finalize/${tokenToUse}`,{
                 method:'POST',
                 headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken},
                 body:JSON.stringify({payment})
@@ -278,14 +305,36 @@
                 orderModal.style.display='none';
                 cart=[];
                 updateCartDisplay();
+
+
+                sessionStorage.removeItem('orderToken'); // sipariş tamamlandığında token sil
                 window.location.href=data.redirect_url;
-            }else alert(data.message||'Hata oluştu!');
+            } else alert(data.message||'Hata oluştu!');
         });
 
         renderProducts();
         loadCart();
+        window.addEventListener("beforeunload", function (event) {
+            const reservationId = document.getElementById('reservation_id').value;
+            if (!reservationId) return;
+
+            // Sayfa reload ise tokeni silme
+            if (performance.getEntriesByType("navigation")[0].type === "reload") return;
+
+            // Tokeni silmek için beacon gönder
+            const formData = new FormData();
+            formData.append('reservation_id', reservationId);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            navigator.sendBeacon(`/reservation/${reservationId}/abandon-cart`, formData);
+
+            // Tarayıcıya kendi mesajımızı vermek istiyoruz
+
+        });
     });
 </script>
+
+
+
 
 </body>
 </html>

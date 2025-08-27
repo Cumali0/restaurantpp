@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ReservationCreatedMail;
 use App\Mail\ReservationStatusMail;
 
 use App\Models\Table;
@@ -52,6 +53,9 @@ class ReservationController extends Controller
             'preorder_token' => Str::random(32), // random token
             'user_id' => auth()->id(),
         ]);
+
+        Mail::to($reservation->email)->send(new ReservationCreatedMail($reservation));
+
 
         return response()->json([
             'success' => true,
