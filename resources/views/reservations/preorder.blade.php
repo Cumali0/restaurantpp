@@ -82,6 +82,7 @@
         <button id="cancel-order">İptal</button>
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const productContainer = document.getElementById('product-container');
@@ -89,20 +90,16 @@
         const cartItems = document.getElementById('cart-items');
         const cartTotal = document.getElementById('cart-total');
         const cartSummary = document.getElementById('cart-summary');
-        const reservationToken = document.getElementById('reservation_token').value;
+        const reservationToken = document.getElementById('reservation_token')?.value;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // --- SESSION STORAGE TOKEN SAKLAMA ---
-        if (!sessionStorage.getItem('orderToken')) {
-            sessionStorage.setItem('orderToken', reservationToken);
-        }
-
+        const isLoggedIn = @json(auth()->check());
         let cart = [];
 
         // --- Backend'den cart yükle ---
         async function loadCart() {
-            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
-            const res = await fetch(`/preorder/get-cart/${tokenToUse}`);
+            let url = isLoggedIn ? '/preorder/get-cart' : '/preorder/get-cart/' + reservationToken;
+            const res = await fetch(url);
             const data = await res.json();
             cart = data.items.map(i => ({
                 cart_item_id: i.id,
@@ -113,23 +110,6 @@
             }));
             updateCartDisplay();
         }
-
-        // --- Sayfa kapanınca veya başka sayfaya gidince token sil ---
-        window.addEventListener('pagehide', function (e) {
-            // sayfa back/forward cache’den geliyorsa silme
-            if (e.persisted) return;
-
-            // navigation API ile reload kontrolü
-            const nav = performance.getEntriesByType("navigation")[0];
-            if(nav && nav.type === "reload") return; // yenilemede silme
-
-            const tokenToDelete = sessionStorage.getItem('orderToken');
-            if(tokenToDelete){
-                const blob = new Blob([JSON.stringify({ _token: csrfToken })], { type: 'application/json' });
-                navigator.sendBeacon(`/preorder/invalidate-token/${tokenToDelete}`, blob);
-                sessionStorage.removeItem('orderToken');
-            }
-        });
 
         // --- Ürünleri render et ---
         const categories = @json($categories);
@@ -183,7 +163,6 @@
             else if (btn.classList.contains('add-to-cart')) addToCart(btn.dataset.id, parseInt(input.value));
         });
 
-        // --- Cart güncelle ---
         function updateCartDisplay() {
             cartItems.innerHTML = '';
             cart.forEach((i, idx) => {
@@ -204,7 +183,6 @@ ${i.name}
             cartSummary.textContent = `${cart.length} ürün, ${cartTotal.textContent}₺`;
         }
 
-        // --- Cart delegasyonu ---
         cartItems.addEventListener('click', async (e)=>{
             const btn = e.target;
             const idx = btn.dataset.idx;
@@ -213,26 +191,26 @@ ${i.name}
             if(btn.classList.contains('increase')) {
                 cart[idx].quantity++;
                 await updateBackendCart(cart[idx].cart_item_id, cart[idx].quantity);
-            }
-            else if(btn.classList.contains('decrease')) {
+            } else if(btn.classList.contains('decrease')) {
                 cart[idx].quantity=Math.max(1,cart[idx].quantity-1);
                 await updateBackendCart(cart[idx].cart_item_id, cart[idx].quantity);
-            }
-            else if(btn.classList.contains('remove')) {
+            } else if(btn.classList.contains('remove')) {
                 await removeFromBackendCart(cart[idx].cart_item_id);
                 cart.splice(idx,1);
             }
-
             updateCartDisplay();
         });
 
-        // --- Backend ile senkron ---
+        // --- Backend işlemleri ---
         async function addToCart(productId, quantity){
-            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
-            const res = await fetch(`/preorder/add/${tokenToUse}`,{
+            const tokenPart = isLoggedIn ? '' : '/' + reservationToken;
+            const body = { product_id: productId, quantity };
+            if(!isLoggedIn) body.token = reservationToken;
+
+            const res = await fetch('/preorder/add' + tokenPart, {
                 method:'POST',
                 headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken},
-                body:JSON.stringify({product_id:productId, quantity})
+                body:JSON.stringify(body)
             });
             const data = await res.json();
             if(data.success){
@@ -248,26 +226,35 @@ ${i.name}
         }
 
         async function updateBackendCart(cart_item_id, quantity){
-            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
-            await fetch(`/preorder/update-item/${tokenToUse}`,{
+            const tokenPart = isLoggedIn ? '' : '/' + reservationToken;
+            const body = { cart_item_id, quantity };
+            if(!isLoggedIn) body.token = reservationToken;
+
+            await fetch('/preorder/update-item' + tokenPart, {
                 method:'POST',
                 headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken},
-                body:JSON.stringify({cart_item_id, quantity})
+                body:JSON.stringify(body)
             });
         }
 
         async function removeFromBackendCart(cart_item_id){
-            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
-            await fetch(`/preorder/remove/${tokenToUse}`,{
+            const tokenPart = isLoggedIn ? '' : '/' + reservationToken;
+            const body = { cart_item_id };
+            if(!isLoggedIn) body.token = reservationToken;
+
+            await fetch('/preorder/remove' + tokenPart, {
                 method:'POST',
                 headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken},
-                body:JSON.stringify({cart_item_id})
+                body:JSON.stringify(body)
             });
         }
 
         document.getElementById('empty-cart').onclick=async()=>{
-            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
-            await fetch(`/preorder/empty/${tokenToUse}`,{method:'POST', headers:{'X-CSRF-TOKEN':csrfToken}});
+            const tokenPart = isLoggedIn ? '' : '/' + reservationToken;
+            const body = {};
+            if(!isLoggedIn) body.token = reservationToken;
+
+            await fetch('/preorder/empty' + tokenPart, { method:'POST', headers:{'X-CSRF-TOKEN':csrfToken}, body: JSON.stringify(body) });
             cart=[];
             updateCartDisplay();
         };
@@ -292,12 +279,15 @@ ${i.name}
         cancelOrder.addEventListener('click', ()=>orderModal.style.display='none');
 
         confirmOrder.addEventListener('click', async ()=>{
-            const tokenToUse = sessionStorage.getItem('orderToken') || reservationToken;
+            const tokenPart = isLoggedIn ? '' : '/' + reservationToken;
             const payment = document.querySelector('input[name="payment"]:checked').value;
-            const res = await fetch(`/preorder/finalize/${tokenToUse}`,{
+            const body = { payment };
+            if(!isLoggedIn) body.token = reservationToken;
+
+            const res = await fetch('/preorder/finalize' + tokenPart, {
                 method:'POST',
                 headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken},
-                body:JSON.stringify({payment})
+                body:JSON.stringify(body)
             });
             const data = await res.json();
             if(data.success){
@@ -305,35 +295,21 @@ ${i.name}
                 orderModal.style.display='none';
                 cart=[];
                 updateCartDisplay();
-
-
-                sessionStorage.removeItem('orderToken'); // sipariş tamamlandığında token sil
                 window.location.href=data.redirect_url;
             } else alert(data.message||'Hata oluştu!');
         });
 
+        // --- Sayfa kapandığında token sil ---
+        window.addEventListener('unload', function () {
+            if(cart.length === 0 || isLoggedIn) return;
+            const blob = new Blob([JSON.stringify({ _token: csrfToken })], { type: 'application/json' });
+            navigator.sendBeacon(`/preorder/invalidate-token/${reservationToken}`, blob);
+        });
+
         renderProducts();
         loadCart();
-        window.addEventListener("beforeunload", function (event) {
-            const reservationId = document.getElementById('reservation_id').value;
-            if (!reservationId) return;
-
-            // Sayfa reload ise tokeni silme
-            if (performance.getEntriesByType("navigation")[0].type === "reload") return;
-
-            // Tokeni silmek için beacon gönder
-            const formData = new FormData();
-            formData.append('reservation_id', reservationId);
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-            navigator.sendBeacon(`/reservation/${reservationId}/abandon-cart`, formData);
-
-            // Tarayıcıya kendi mesajımızı vermek istiyoruz
-
-        });
     });
 </script>
-
-
 
 
 </body>

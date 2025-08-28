@@ -176,27 +176,27 @@ Route::get('/menu/{id}', [ProductController::class, 'categoryProducts'])->name('
 
 // Rezervasyona özel ön sipariş sayfası
 // Ön sipariş sayfası (rezervasyon token ile)
-Route::get('/preorder/{token}', [PreorderController::class, 'reservationPreorder'])
+Route::get('/preorder/{token?}', [PreorderController::class, 'reservationPreorder'])
     ->name('reservation.preorder');
 
 // Sepete ürün ekle
-Route::post('/preorder/add/{token}', [PreorderController::class, 'addToCart'])
+Route::post('/preorder/add/{token?}', [PreorderController::class, 'addToCart'])
     ->name('preorder.add');
 
 // Sepetteki ürün miktarını güncelle
-Route::post('/preorder/update-item/{token}', [PreorderController::class, 'updateCartItem'])
+Route::post('/preorder/update-item/{token?}', [PreorderController::class, 'updateCartItem'])
     ->name('preorder.updateItem');
 
 // Sepetten ürün çıkar
-Route::post('/preorder/remove/{token}', [PreorderController::class, 'removeFromCart'])
+Route::post('/preorder/remove/{token?}', [PreorderController::class, 'removeFromCart'])
     ->name('preorder.remove');
 
 // Sepeti boşalt
-Route::post('/preorder/empty/{token}', [PreorderController::class, 'emptyCart'])
+Route::post('/preorder/empty/{token?}', [PreorderController::class, 'emptyCart'])
     ->name('preorder.empty');
 
 // Ön siparişi tamamla
-Route::post('/preorder/finalize/{token}', [PreorderController::class, 'finalizePreorder'])
+Route::post('/preorder/finalize/{token?}', [PreorderController::class, 'finalizePreorder'])
     ->name('preorder.finalize');
 
 // Cart verilerini getir (AJAX)
@@ -261,7 +261,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 });
 
 
-Route::post('/preorder/invalidate-token/{token}', [PreorderController::class, 'invalidateToken']);
+Route::post('/preorder/invalidate-token/{token?}', [PreorderController::class, 'invalidateToken']);
 
 Route::post('/reservation/generate-token', [PreorderController::class, 'generateNewToken'])
     ->name('reservation.generateToken');
