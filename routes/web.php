@@ -12,7 +12,7 @@ use App\Http\Controllers\PreorderController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\PaymentController;
-
+use App\Http\Controllers\PreorderPaymentController;
 
 use App\Http\Controllers\Auth\RegisterController;
 
@@ -272,3 +272,15 @@ Route::get('/orders/{order}/continue', [OrderController::class, 'continue'])
     ->middleware('auth');
 
 
+
+Route::get('/test-pay', function () {
+    return view('test-pay'); // formu gösterir
+});
+
+// Ödeme formunu göster
+Route::get('/preorder/payment/{order}', [PreorderPaymentController::class, 'showPaymentForm'])
+    ->name('preorder.payment.form');
+
+// Ödeme işlemini yap
+Route::post('/preorder/pay/{order}', [PreorderPaymentController::class, 'pay'])
+    ->name('preorder.pay');

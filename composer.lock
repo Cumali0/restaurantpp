@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1ba2649164342548080a1bd7789c0790",
+    "content-hash": "3531150f873447981c604c970c5105dc",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1605,6 +1605,62 @@
                 }
             ],
             "time": "2025-02-03T10:55:03+00:00"
+        },
+        {
+            "name": "iyzico/iyzipay-php",
+            "version": "v2.0.59",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iyzico/iyzipay-php.git",
+                "reference": "eccfa97465d78143dbe112886baeaf863619c074"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iyzico/iyzipay-php/zipball/eccfa97465d78143dbe112886baeaf863619c074",
+                "reference": "eccfa97465d78143dbe112886baeaf863619c074",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=7.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~9.6",
+                "satooshi/php-coveralls": "~0.6.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Iyzipay\\": "src/Iyzipay/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "iyzico and contributors",
+                    "homepage": "https://github.com/iyzico/iyzipay-php/contributors"
+                }
+            ],
+            "description": "iyzipay api php client",
+            "homepage": "https://www.iyzico.com",
+            "keywords": [
+                "iyzico",
+                "iyzico.com",
+                "iyzipay",
+                "iyzipay api",
+                "iyzipay api php",
+                "iyzipay api php client",
+                "iyzipay php",
+                "payment processing"
+            ],
+            "support": {
+                "issues": "https://github.com/iyzico/iyzipay-php/issues",
+                "source": "https://github.com/iyzico/iyzipay-php/tree/v2.0.59"
+            },
+            "time": "2025-05-05T14:25:39+00:00"
         },
         {
             "name": "laravel/framework",

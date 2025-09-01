@@ -194,10 +194,11 @@ class PreorderController extends Controller
             $cart->delete();
             DB::commit();
 
+            // Ödeme sayfasına yönlendir
             return response()->json([
                 'success' => true,
-                'message' => 'Sipariş başarıyla tamamlandı!',
-                'redirect_url' => route('payment.page', ['order' => $order->id])
+                'message' => 'Ön sipariş oluşturuldu!',
+                'redirect_url' => route('preorder.payment.form', ['order' => $order->id])
             ]);
 
         } catch (\Exception $e) {

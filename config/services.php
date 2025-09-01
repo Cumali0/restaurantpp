@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'iyzico' => [
+        'api_key' => env('IYZI_API_KEY'),
+        'secret_key' => env('IYZI_SECRET_KEY'),
+        'base_url' => env('IYZI_BASE_URL'),
+    ],
+
+
 ];
