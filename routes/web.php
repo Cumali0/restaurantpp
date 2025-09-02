@@ -284,3 +284,34 @@ Route::get('/preorder/payment/{order}', [PreorderPaymentController::class, 'show
 // Ödeme işlemini yap
 Route::post('/preorder/pay/{order}', [PreorderPaymentController::class, 'pay'])
     ->name('preorder.pay');
+
+
+use App\Http\Controllers\TablePaymentController;
+
+Route::get('/table-payment/{reservation}', [TablePaymentController::class,'showPaymentForm'])
+    ->name('table.payment.form');
+
+Route::post('/table-payment/{reservation}/pay', [TablePaymentController::class,'pay'])
+    ->name('table.pay');
+
+
+
+
+// Ödeme formunu göster
+Route::get('/preorder/{order}/payment', [PreorderPaymentController::class, 'showPaymentForm'])
+    ->name('preorder.payment-form');
+
+// Ödeme işlemi (POST)
+Route::post('/preorder/{order}/pay', [PreorderPaymentController::class, 'pay'])
+    ->name('preorder.pay');
+
+// Ödeme sonucu sayfası (isteğe bağlı, controller içinde view döndürülüyor)
+Route::get('/preorder/{order}/payment-result', function($orderId) {
+    $order = \App\Models\Order::findOrFail($orderId);
+    return view('preorder.payment-result', ['order' => $order]);
+})->name('preorder.payment-result');
+
+// Ana sayfa yönlendirmesi (dashboard veya home)
+Route::get('/dashboard', function() {
+    return view('dashboard'); // Kendi dashboard blade’iniz
+})->name('dashboard');

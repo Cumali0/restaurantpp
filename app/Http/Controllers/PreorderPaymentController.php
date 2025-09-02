@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderInvoiceMail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Iyzipay\Options;
 use Iyzipay\Model\Payment;
 use Iyzipay\Request\CreatePaymentRequest;
 use App\Models\Order;
-use App\Models\Payment as PaymentModel; // Payment modelini ekle
+use App\Models\Payment as PaymentModel;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+
+// Payment modelini ekle
 
 class PreorderPaymentController extends Controller
 {
@@ -97,8 +102,15 @@ public function pay(Request $request, Order $order)
             'payment_method_id' => 1, // IyziCo payment method ID
             'amount_price' => $order->total_price,
             'status' => $payment->getStatus(),
+
         ]);
+
+
+
+        // Mail gönder
+        Mail::to($order->reservation->email)->send(new OrderInvoiceMail($order));
     }
+
 
     // Ödeme sonucunu göster
     return view('preorder.payment-result', ['payment' => $payment, 'order' => $order]);

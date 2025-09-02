@@ -4,12 +4,12 @@
     <div class="container mx-auto p-4">
         <h2 class="text-2xl font-bold mb-4">Ödeme Sayfası</h2>
 
-        <form action="{{ route('preorder.pay', ['order' => $order->id]) }}" method="POST">
+        <form action="{{ route('preorder.pay', $order->id) }}" method="POST">
             @csrf
 
             <div class="mb-4">
                 <label class="block mb-1 font-semibold">Kart Sahibi</label>
-                <input type="text" name="card_holder_name" value="{{ old('card_holder_name') }}" class="border p-2 w-full" required>
+                <input type="text" name="card_holder_name" value="{{ old('card_holder_name') ?? $order->reservation->name ?? 'John Doe' }}" class="border p-2 w-full" required>
             </div>
 
             <div class="mb-4">

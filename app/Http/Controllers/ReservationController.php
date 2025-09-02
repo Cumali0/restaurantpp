@@ -35,6 +35,9 @@ class ReservationController extends Controller
 
         $start = $request->datetime;
         $end = \Carbon\Carbon::parse($start)->addMinutes($request->duration ?? 90);
+        $table = Table::find($request->table_id);
+        $totalPrice = $table->preprice;
+
 
         $reservation = Reservation::create([
             'table_id' => $request->table_id,
@@ -48,7 +51,7 @@ class ReservationController extends Controller
             'message' => $request->message,
             'status' => 'reserved',
             'is_preorder' => $request->has('is_preorder'),
-            'total_price' => 0,
+            'total_price' => $table->preprice,
             'payment_status' => 'unpaid',
             'preorder_token' => Str::random(32), // random token
             'user_id' => auth()->id(),
@@ -150,7 +153,7 @@ class ReservationController extends Controller
         ]);
 
         $start = Carbon::createFromFormat('Y-m-d H:i', $request->datetime);
-        $duration = (int) $request->input('duration', 90);
+        $duration = (int)$request->input('duration', 90);
         $end = $start->copy()->addMinutes($duration);
 
         // Çalışma saatleri kontrolü (aynı şekilde)
@@ -187,7 +190,7 @@ class ReservationController extends Controller
                 'table_id' => $request->table_id,
                 'name' => $request->name,
                 'surname' => $request->surname,
-                'phone' => $request->phone, // ✅ eklendi
+                'phone' => $request->phone,
                 'email' => $request->email,
                 'datetime' => $start,
                 'end_datetime' => $end,
@@ -195,25 +198,27 @@ class ReservationController extends Controller
                 'message' => $request->message,
                 'status' => 'reserved',
                 'is_preorder' => $request->has('is_preorder'),
-                'preorder_token' => Str::random(32), // ✅ varsa ön sipariş için
+                'preorder_token' => Str::random(32),
             ]);
 
+            // Ödeme URL'si her zaman oluşturulsun
+            $paymentUrl = route('table.payment.form', ['reservation' => $reservation->id]);
 
-// Eğer ön sipariş seçilmişse, preorder sayfasına yönlendir
+            $response = [
+                'success' => true,
+                'message' => 'Rezervasyon başarıyla oluşturuldu.',
+                'payment_url' => $paymentUrl,
+            ];
+
+            // Ön sipariş varsa ayrıca ön sipariş URL'si ekle
+            if ($reservation->is_preorder) {
+                $response['preorder_url'] = route('reservation.preorder', $reservation->preorder_token);
+            }
+
             if ($request->ajax()) {
-                $response = ['success' => true, 'message' => 'Rezervasyon başarıyla gönderildi.'];
-
-                // Eğer ön sipariş seçilmişse, JS’e yönlendirme URL’si gönder
-                if($reservation->is_preorder){
-
-                    $response['preorder_url'] = route('reservation.preorder', $reservation->preorder_token);
-
-                }
-
                 return response()->json($response);
             }
 
-            // Değilse redirect
             return back()->with('success', 'Rezervasyon başarıyla gönderildi.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
@@ -225,7 +230,7 @@ class ReservationController extends Controller
 
 
 
-    // Rezervasyonu onaylama
+        // Rezervasyonu onaylama
     public function approve($id)
     {
         $reservation = Reservation::findOrFail($id);

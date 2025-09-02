@@ -40,12 +40,36 @@ class OrderController extends Controller
 
     public function cancel(Order $order)
     {
-        if ($order->reservation->user_id !== auth()->id()) abort(403);
+        // Eğer ödeme varsa iade et
+        $payment = Payment::where('order_id', $order->id)->first();
 
-        $order->status = 'canceled';
+        if ($payment && $payment->status === 'success') {
+
+            // İyzico refund request
+            $options = new Options();
+            $options->setApiKey(config('services.iyzico.api_key'));
+            $options->setSecretKey(config('services.iyzico.secret_key'));
+            $options->setBaseUrl(config('services.iyzico.base_url'));
+
+            $refundRequest = new CreateRefundRequest();
+            $refundRequest->setPaymentTransactionId($payment->transaction_id); // payments tablosunda olmalı
+            $refundRequest->setPrice($payment->amount_price);
+            $refundRequest->setIp(request()->ip());
+            $refundRequest->setCurrency("TRY");
+
+            $refund = Refund::create($refundRequest, $options);
+
+            if ($refund->getStatus() === "success") {
+                $payment->status = 'refunded';
+                $payment->save();
+            }
+        }
+
+        // Siparişi iptal et
+        $order->status = 'cancelled';
         $order->save();
 
-        return redirect()->route('orders.index')->with('success', 'Sipariş iptal edildi.');
+        return redirect()->back()->with('success', 'Sipariş iptal edildi ve ödeme iade edildi.');
     }
 
 

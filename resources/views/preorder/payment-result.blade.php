@@ -7,6 +7,7 @@
         @if($payment->getStatus() === 'success')
             <div class="bg-green-100 p-4 rounded border border-green-400 mb-4">
                 <p class="font-bold text-green-700">Ödeme Başarılı ✅</p>
+                <p>Siparişinizin faturası mail olarak gönderildi.</p>
             </div>
         @else
             <div class="bg-red-100 p-4 rounded border border-red-400 mb-4">

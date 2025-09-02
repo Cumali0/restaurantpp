@@ -43,11 +43,11 @@
                             </a>
                         </div>
 
-                        {{-- QR KODU BURAYA EKLENDİ --}}
                         <div style="text-align:center; margin:20px 0;">
-                            {!! $qrCode !!}
+                            <img src="data:image/png;base64,{{ $qrCode }}" alt="Rezervasyon QR" style="width:150px; height:150px;">
                             <p style="font-size:14px; color:#666;">Rezervasyon detaylarınızı QR kodu okutup görüntüleyebilirsiniz.</p>
                         </div>
+
                         <p style="font-size:14px; color:#777; border-top:1px solid #eee; padding-top:15px;">
                             Saygılarımızla,<br />
                             <strong>{{ config('app.name') }}</strong>
