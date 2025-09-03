@@ -293,6 +293,32 @@
 
 <!--Reservation Section End-->
 
+<!-- Masa Ödeme Popup -->
+<div class="modal fade" id="tablePaymentModal" tabindex="-1" aria-labelledby="tablePaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="tablePaymentModalLabel">Masa Ücreti Ödemesi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>Bu masayı rezerve edebilmek için ön ödeme yapmanız gerekiyor.</p>
+                <p><strong>Tutar:</strong> <span id="reservationPrice"></span> ₺</p>
+            </div>
+
+            <div class="modal-footer">
+                <a href="#" id="goToPayment" class="btn btn-primary">Ödemeye Git</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
 @guest
     <div class="mt-4 p-3 border rounded bg-light">
         <h6>Şiparişiniz yarım kaldıysa:</h6>
@@ -466,7 +492,10 @@
 
 @push('scripts')
     <script>
+
+
         document.addEventListener('DOMContentLoaded', function() {
+
             let selectedTableId = null;
 
             // -----------------------------
@@ -600,19 +629,30 @@
                     .then(res=>res.json())
                     .then(data=>{
                         if(data.success){
-                            Swal.fire({icon:'success', title:'Başarılı', text:data.message, timer:2000, showConfirmButton:false})
-                                .then(()=>{
-                                    if(preorderCheckbox.checked && data.preorder_url){
-                                        window.location.href = data.preorder_url;
-                                    } else {
-                                        reservationForm.reset();
-                                        clearTables();
-                                    }
-                                });
+                            // Eğer masa ücreti ödemesi gerekiyorysa modal göster
+                            if(data.payment_url){
+                                document.getElementById('reservationPrice').textContent = data.table_preprice || '0';
+                                const goBtn = document.getElementById('goToPayment');
+                                goBtn.href = data.payment_url;
+                                const paymentModal = new bootstrap.Modal(document.getElementById('tablePaymentModal'));
+                                paymentModal.show();
+                            }
+
+                            // Ön sipariş varsa yönlendirme
+                            else if(preorderCheckbox.checked && data.preorder_url){
+                                window.location.href = data.preorder_url;
+                            }
+
+                            else {
+                                Swal.fire({icon:'success', title:'Başarılı', text:data.message, timer:2000, showConfirmButton:false});
+                                reservationForm.reset();
+                                clearTables();
+                            }
                         } else {
                             Swal.fire({icon:'error', title:'Hata', text:data.message||'Rezervasyon yapılamadı.'});
                         }
                     })
+
                     .catch(err=>{
                         console.error(err);
                         document.getElementById('reservationResult').innerHTML =

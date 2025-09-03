@@ -14,6 +14,7 @@ use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PreorderPaymentController;
 
+use App\Http\Controllers\TablePaymentController;
 use App\Http\Controllers\Auth\RegisterController;
 
 // Ana sayfa
@@ -286,13 +287,7 @@ Route::post('/preorder/pay/{order}', [PreorderPaymentController::class, 'pay'])
     ->name('preorder.pay');
 
 
-use App\Http\Controllers\TablePaymentController;
 
-Route::get('/table-payment/{reservation}', [TablePaymentController::class,'showPaymentForm'])
-    ->name('table.payment.form');
-
-Route::post('/table-payment/{reservation}/pay', [TablePaymentController::class,'pay'])
-    ->name('table.pay');
 
 
 
@@ -315,3 +310,14 @@ Route::get('/preorder/{order}/payment-result', function($orderId) {
 Route::get('/dashboard', function() {
     return view('dashboard'); // Kendi dashboard blade’iniz
 })->name('dashboard');
+
+
+
+Route::post('/reservation/pay', [ReservationController::class, 'pay'])->name('reservation.pay');
+Route::post('/reservation/callback', [ReservationController::class, 'callback'])->name('reservation.callback');
+
+Route::get('/reservation/{reservation}/payment', [TablePaymentController::class, 'showPaymentForm'])
+    ->name('table.pay.form');
+
+Route::post('/reservation/{reservation}/pay', [TablePaymentController::class, 'payTableFee'])
+    ->name('table.pay');

@@ -19,7 +19,10 @@ class PreorderPaymentController extends Controller
     // Ödeme formunu göster
     public function showPaymentForm(Order $order)
     {
-        return view('preorder.payment-form', compact('order'));
+        return view('preorder.payment-form', [
+            'order' => $order,
+            'price' => $order->total_price, // <-- burayı ekledik
+        ]);
     }
 
 

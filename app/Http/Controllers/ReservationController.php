@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\ReservationCreatedMail;
 use App\Mail\ReservationStatusMail;
 
+use App\Models\Payment;
 use App\Models\Table;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -17,27 +18,21 @@ class ReservationController extends Controller
 {
     public function storePublic(Request $request)
     {
-
-            $request->validate([
-                'table_id' => 'required|exists:tables,id',
-                'name' => 'required|string|max:255',
-                'surname' => 'required|string|max:255',
-                'phone' => 'required|string|max:20',
-                'email' => 'required|email|max:255',
-                'datetime' => 'required|date_format:Y-m-d H:i',
-                'people' => 'required|integer|min:1',
-                'message' => 'nullable|string',
-                'duration' => 'nullable|integer|min:15|max:240',
-                'is_preorder' => 'nullable|boolean'
-
-
+        $request->validate([
+            'table_id' => 'required|exists:tables,id',
+            'name' => 'required|string|max:255',
+            'surname' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
+            'datetime' => 'required|date_format:Y-m-d H:i',
+            'people' => 'required|integer|min:1',
+            'message' => 'nullable|string',
+            'duration' => 'nullable|integer|min:15|max:240',
+            'is_preorder' => 'nullable|boolean'
         ]);
 
-        $start = $request->datetime;
-        $end = \Carbon\Carbon::parse($start)->addMinutes($request->duration ?? 90);
         $table = Table::find($request->table_id);
-        $totalPrice = $table->preprice;
-
+        $totalPrice = $table->preprice ?? 0; // fallback 0 TL
 
         $reservation = Reservation::create([
             'table_id' => $request->table_id,
@@ -45,28 +40,31 @@ class ReservationController extends Controller
             'surname' => $request->surname,
             'phone' => $request->phone,
             'email' => $request->email,
-            'datetime' => $start,
-            'end_datetime' => $end,
+            'datetime' => $request->datetime,
+            'end_datetime' => \Carbon\Carbon::parse($request->datetime)->addMinutes($request->duration ?? 90),
             'people' => $request->people,
             'message' => $request->message,
             'status' => 'reserved',
             'is_preorder' => $request->has('is_preorder'),
-            'total_price' => $table->preprice,
+            'total_price' => $totalPrice,
             'payment_status' => 'unpaid',
-            'preorder_token' => Str::random(32), // random token
+            'preorder_token' => Str::random(32),
             'user_id' => auth()->id(),
         ]);
 
-        Mail::to($reservation->email)->send(new ReservationCreatedMail($reservation));
 
+        // Mail gönderebilirsin
+        Mail::to($reservation->email)->send(new ReservationCreatedMail($reservation));
 
         return response()->json([
             'success' => true,
             'message' => 'Rezervasyon başarıyla oluşturuldu.',
-            'preorder_url' => route('reservation.preorder', $reservation->preorder_token)
+            'preorder_url' => route('reservation.preorder', $reservation->preorder_token),
+            'payment_url' => route('table.pay.form', $reservation->id),
+            'table_preprice' => $totalPrice
         ]);
-
     }
+
 
 
 
@@ -340,6 +338,7 @@ class ReservationController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Rezervasyon iptal edildi']);
     }
+
 
 
 }
